@@ -2458,6 +2458,7 @@ function HelpApp({ onClose }: { onClose?: () => void }) {
     { id: "journal", label: "New Journal" },
     { id: "memories", label: "Memories" },
     { id: "chat", label: "AI Chat" },
+    { id: "goals", label: "Time Machine" },
     { id: "paint", label: "Paint" },
     { id: "profile", label: "System Monitor" },
     { id: "settings", label: "Settings" },
@@ -2600,6 +2601,28 @@ function HelpApp({ onClose }: { onClose?: () => void }) {
                 <li>"Give me a summary of my mood fluctuations."</li>
                 <li>"Do you remember my entry about meeting friends?"</li>
               </ul>
+            </div>
+          </>
+        )}
+
+        {tab === "goals" && (
+          <>
+            <h2 style={{ margin: 0, fontSize: "16px", color: "#000080", borderBottom: "2px solid #000080", paddingBottom: "4px" }}>
+              Time Machine (Goals & Vision)
+            </h2>
+            <p style={{ margin: 0, fontSize: "12px", lineHeight: "1.6", color: "#333" }}>
+              The <strong>Time Machine</strong> application captures your long-term dreams and target aspirations, feeding them directly into your cognitive memory network.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "11px" }}>
+              <div>
+                <strong>🔮 Future Vision Statement:</strong> Scribe a detailed statement about your future goals or plans.
+              </div>
+              <div>
+                <strong>🧠 Automated Goal Extraction:</strong> Saving your vision statement automatically prompts Gemini to parse and extract 3 to 7 clear, actionable bullet goals.
+              </div>
+              <div>
+                <strong>💬 Contextual AI Memory Injection ($Goals):</strong> Type <code>$goals</code> in the <strong>AI Chat</strong> companion app (e.g. <i>"How do my habits lately align with my $goals?"</i>). The RAG model will query and compare your recent diary entries against your future vision goals!
+              </div>
             </div>
           </>
         )}
