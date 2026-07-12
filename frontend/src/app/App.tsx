@@ -5713,14 +5713,14 @@ export default function App() {
     localStorage.removeItem("mnema_iconPositions");
     setIconPositions({
       journal: { x: 12, y: 12 },
-      memories: { x: 96, y: 12 },
-      chat: { x: 180, y: 12 },
-      profile: { x: 264, y: 12 },
-      settings: { x: 348, y: 12 },
-      help: { x: 432, y: 12 },
-      goals: { x: 516, y: 12 },
-      terminal: { x: 600, y: 12 },
-      paint: { x: 12, y: 104 },
+      memories: { x: 12, y: 104 },
+      chat: { x: 12, y: 196 },
+      profile: { x: 12, y: 288 },
+      settings: { x: 12, y: 380 },
+      help: { x: 12, y: 472 },
+      goals: { x: 12, y: 564 },
+      terminal: { x: 12, y: 656 },
+      paint: { x: 96, y: 12 },
       recycle: { x: 96, y: 104 },
     });
     alert("Desktop icon grid positions restored to default!");
@@ -6211,8 +6211,8 @@ export default function App() {
 
       {/* Desktop icons */}
       {DESKTOP_ICONS.map((di, i) => {
-        const row = Math.floor(i / 8);
-        const col = i % 8;
+        const col = Math.floor(i / 8);
+        const row = i % 8;
         const defaultX = 12 + col * 84;
         const defaultY = 12 + row * 92;
         const pos = iconPositions[di.key] || { x: defaultX, y: defaultY };
