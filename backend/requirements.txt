@@ -1,5 +1,5 @@
-fastapi
-uvicorn
-firebase-admin
-google-generativeai
-python-dotenv
+fastapi==0.139.0
+uvicorn==0.51.0
+firebase-admin==7.5.0
+google-generativeai==0.8.6
+python-dotenv==1.2.2
