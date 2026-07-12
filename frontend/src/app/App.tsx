@@ -3905,7 +3905,6 @@ function CreatorApp() {
   );
 }
 
-// ─── Settings App ─────────────────────────────────────────────────────────────
 interface SettingsAppProps {
   desktopColor: string;
   setDesktopColor: (c: string) => void;
@@ -3924,6 +3923,8 @@ interface SettingsAppProps {
   setDesktopText: (t: string) => void;
   desktopTextPreset: string;
   setDesktopTextPreset: (p: string) => void;
+  desktopTexture: "none" | "dither" | "scanlines";
+  setDesktopTexture: (t: "none" | "dither" | "scanlines") => void;
   onResetIconPositions: () => void;
   onResetAllSettings: () => void;
   confirmCustom: (message: string, subMessage?: string) => Promise<boolean>;
@@ -3949,6 +3950,8 @@ function SettingsApp({
   setDesktopText,
   desktopTextPreset,
   setDesktopTextPreset,
+  desktopTexture,
+  setDesktopTexture,
   onResetIconPositions,
   onResetAllSettings,
   confirmCustom,
@@ -4148,6 +4151,22 @@ function SettingsApp({
                 <option value="small">Small (16x16)</option>
                 <option value="normal">Normal (32x32)</option>
                 <option value="large">Large (48x48)</option>
+              </select>
+            </div>
+
+            {/* Desktop Texture setting: fully functional */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <label style={{ fontSize: "12px", width: "120px", flexShrink: 0 }}>
+                Desktop Texture:
+              </label>
+              <select
+                value={desktopTexture}
+                onChange={(e) => setDesktopTexture(e.target.value as any)}
+                style={{ ...inputStyle({ background: "#ffffff", cursor: "default" }) }}
+              >
+                <option value="none">None (Flat Color)</option>
+                <option value="dither">Pixel Dither (CRT Matte)</option>
+                <option value="scanlines">CRT Scanlines</option>
               </select>
             </div>
 
@@ -5721,6 +5740,13 @@ export default function App() {
   const [screenSaverActive, setScreenSaverActive] = useState(false);
   const [desktopTextPreset, setDesktopTextPreset] = useState(() => localStorage.getItem("mnema_desktopTextPreset") || "mnema98");
   const [desktopText, setDesktopText] = useState(() => localStorage.getItem("mnema_desktopText") || "Mnema '98");
+  const [desktopTexture, setDesktopTexture] = useState<"none" | "dither" | "scanlines">(() => {
+    return (localStorage.getItem("mnema_desktopTexture") as "none" | "dither" | "scanlines") || "dither";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("mnema_desktopTexture", desktopTexture);
+  }, [desktopTexture]);
 
   useEffect(() => {
     localStorage.setItem("mnema_desktopColor", desktopColor);
@@ -6155,6 +6181,8 @@ export default function App() {
             setDesktopText={setDesktopText}
             desktopTextPreset={desktopTextPreset}
             setDesktopTextPreset={setDesktopTextPreset}
+            desktopTexture={desktopTexture}
+            setDesktopTexture={setDesktopTexture}
             onResetIconPositions={handleResetIconPositions}
             onResetAllSettings={handleResetAllSettings}
             confirmCustom={confirmCustom}
@@ -6167,13 +6195,23 @@ export default function App() {
     }
   };
 
+  const textureBgStyle = (color: string) => ({
+    background: COLOR_MAP[color] || "#008080",
+    backgroundImage:
+      desktopTexture === "dither"
+        ? "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'><rect width='2' height='2' fill='rgba(0,0,0,0.07)'/><rect x='2' y='2' width='2' height='2' fill='rgba(0,0,0,0.07)'/><rect x='2' width='2' height='2' fill='rgba(255,255,255,0.02)'/><rect y='2' width='2' height='2' fill='rgba(255,255,255,0.02)'/></svg>\")"
+        : desktopTexture === "scanlines"
+        ? "linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.12) 50%)"
+        : "none",
+    backgroundSize: desktopTexture === "scanlines" ? "100% 4px" : "auto",
+  });
+
   if (loadingAuth) {
     return (
       <div
         style={{
           width: "100vw",
           height: "100vh",
-          background: COLOR_MAP[desktopColor] || "#008080",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -6181,6 +6219,7 @@ export default function App() {
           fontFamily: SYS_FONT,
           fontSize: "14px",
           userSelect: "none",
+          ...textureBgStyle(desktopColor),
         }}
       >
         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
@@ -6199,13 +6238,13 @@ export default function App() {
           width: "100vw",
           height: "100vh",
           overflow: "hidden",
-          background: COLOR_MAP[desktopColor] || "#008080",
           position: "relative",
           fontFamily: SYS_FONT,
           userSelect: "none",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          ...textureBgStyle(desktopColor),
         }}
       >
         <LoginDialog />
@@ -6223,10 +6262,10 @@ export default function App() {
         width: "100vw",
         height: "100vh",
         overflow: "hidden",
-        background: COLOR_MAP[desktopColor] || "#008080",
         position: "relative",
         fontFamily: SYS_FONT,
         userSelect: "none",
+        ...textureBgStyle(desktopColor),
       }}
     >
       {/* Centered Desktop Wallpaper Text */}
