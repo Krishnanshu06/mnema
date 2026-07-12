@@ -5492,6 +5492,28 @@ function LoginDialog() {
             {isSignUp ? "Cancel" : "Sign Up"}
           </button>
         </div>
+
+        {/* Free Tier Info Banner */}
+        <div
+          style={{
+            marginTop: "12px",
+            padding: "8px",
+            background: "#dfdfdf",
+            boxShadow: "inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a",
+            fontSize: "10px",
+            fontFamily: SYS_FONT,
+            color: "#404040",
+            lineHeight: "1.4",
+            display: "flex",
+            gap: "8px",
+            alignItems: "flex-start",
+          }}
+        >
+          <span style={{ fontSize: "14px", lineHeight: "1" }}>ℹ️</span>
+          <div>
+            <strong>Free Hosting Spin-Up:</strong> If the server has been idle, the first logon may take up to 45 seconds to establish connection. Subsequent operations are instant.
+          </div>
+        </div>
       </form>
     </div>
   );
