@@ -13,7 +13,9 @@ import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, dele
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../firebase";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL ||
+  (import.meta.env.PROD ? "https://mnema-backend.onrender.com" : "http://localhost:8000");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AppId = "journal" | "memories" | "chat" | "profile" | "settings" | "help" | "goals" | "terminal" | "creator" | "paint";
@@ -2042,12 +2044,15 @@ function ChatApp({
           hour: "2-digit",
           minute: "2-digit",
         });
+        const errDetail = err?.message?.includes("Failed to fetch")
+          ? "Error: Could not connect to RAG server. If the Render instance is waking from inactivity sleep, please wait ~30 seconds and retry!"
+          : `Error: ${err?.message || "Could not connect to RAG server. Ensure the backend is active."}`;
         setMessages((prev) => [
           ...prev,
           {
             id: prev.length + 1,
             from: "mnema",
-            text: "Error: Could not connect to RAG server. Ensure your Python FastAPI server is running.",
+            text: errDetail,
             time: replyTime,
           },
         ]);

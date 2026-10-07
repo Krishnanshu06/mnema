@@ -20,12 +20,15 @@ genai.configure(api_key=api_key)
 app = FastAPI(title="Mnema 98 API Server")
 
 # 3. Enable CORS
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "")
 allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+if not allowed_origins:
+    allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=r".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -20,7 +20,14 @@ if not firebase_admin._apps:
             raise ValueError(f"Failed to parse FIREBASE_CREDENTIALS environment variable: {str(e)}")
     else:
         # Fallback to local file for development
-        cred = credentials.Certificate("service-account.json")
+        possible_paths = [
+            "service-account.json",
+            "service-account1.json",
+            os.path.join(os.path.dirname(__file__), "service-account.json"),
+            os.path.join(os.path.dirname(__file__), "service-account1.json")
+        ]
+        cert_path = next((p for p in possible_paths if os.path.exists(p)), "service-account.json")
+        cred = credentials.Certificate(cert_path)
         
     firebase_admin.initialize_app(cred)
 
