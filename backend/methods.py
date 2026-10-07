@@ -29,9 +29,11 @@ if not firebase_admin._apps:
         cert_path = next((p for p in possible_paths if os.path.exists(p)), "service-account.json")
         cred = credentials.Certificate(cert_path)
         
-    firebase_admin.initialize_app(cred)
-
 db = firestore.client()
+
+api_key = os.getenv("GEMINI_API_KEY")
+if api_key:
+    genai.configure(api_key=api_key)
 
 # 2. Define Model Names
 EMBEDDING_MODEL = "models/gemini-embedding-2"

@@ -13,9 +13,21 @@ import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, dele
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../firebase";
 
-const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL ||
-  (import.meta.env.PROD ? "https://mnema-backend.onrender.com" : "http://localhost:8000");
+const getBackendUrl = (): string => {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      const configured = import.meta.env.VITE_BACKEND_URL;
+      if (configured && !configured.includes("localhost") && !configured.includes("127.0.0.1")) {
+        return configured;
+      }
+      return "https://mnema-backend.onrender.com";
+    }
+  }
+  return import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AppId = "journal" | "memories" | "chat" | "profile" | "settings" | "help" | "goals" | "terminal" | "creator" | "paint";
@@ -2018,7 +2030,14 @@ function ChatApp({
           })
         });
         if (!response.ok) {
-          throw new Error("Failed to connect to the memory chat server.");
+          let errorDetail = `Server error (${response.status})`;
+          try {
+            const errData = await response.json();
+            if (errData && errData.detail) {
+              errorDetail = typeof errData.detail === "string" ? errData.detail : JSON.stringify(errData.detail);
+            }
+          } catch (_) {}
+          throw new Error(errorDetail);
         }
         const data = await response.json();
         const replyTime = new Date().toLocaleTimeString("en-US", {
@@ -2039,20 +2058,21 @@ function ChatApp({
           onGuestAiUsed();
         }
       } catch (err: any) {
-        console.error(err);
+        console.error("Chat error:", err);
         const replyTime = new Date().toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
         });
-        const errDetail = err?.message?.includes("Failed to fetch")
-          ? "Error: Could not connect to RAG server. If the Render instance is waking from inactivity sleep, please wait ~30 seconds and retry!"
-          : `Error: ${err?.message || "Could not connect to RAG server. Ensure the backend is active."}`;
+        const rawMsg = err?.message || "";
+        const errDetail = (rawMsg.includes("Failed to fetch") || rawMsg.includes("NetworkError"))
+          ? "Could not connect to RAG server. If the Render instance is waking from inactivity sleep (~30s), please wait a moment and retry!"
+          : rawMsg;
         setMessages((prev) => [
           ...prev,
           {
             id: prev.length + 1,
             from: "mnema",
-            text: errDetail,
+            text: `Error: ${errDetail}`,
             time: replyTime,
           },
         ]);
