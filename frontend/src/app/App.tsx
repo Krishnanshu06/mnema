@@ -3,6 +3,7 @@ import {
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
+  signInAnonymously,
   signOut,
   User
 } from "firebase/auth";
@@ -383,12 +384,14 @@ function TitleBtn({
   label, 
   onClick, 
   disabled = false, 
-  title 
+  title,
+  isMobile,
 }: { 
   label: string; 
   onClick: () => void; 
   disabled?: boolean; 
   title?: string;
+  isMobile?: boolean;
 }) {
   const [pressed, setPressed] = useState(false);
   return (
@@ -401,16 +404,21 @@ function TitleBtn({
         e.stopPropagation();
         if (!disabled) setPressed(true);
       }}
+      onTouchStart={(e) => {
+        e.stopPropagation();
+        if (!disabled) setPressed(true);
+      }}
       onMouseUp={() => setPressed(false)}
+      onTouchEnd={() => setPressed(false)}
       onMouseLeave={() => setPressed(false)}
       title={title}
       style={{
-        width: "16px",
-        height: "14px",
+        width: isMobile ? "28px" : "16px",
+        height: isMobile ? "24px" : "14px",
         background: "#c0c0c0",
         border: "none",
         cursor: disabled ? "help" : "default",
-        fontSize: "9px",
+        fontSize: isMobile ? "12px" : "9px",
         fontFamily: "Arial, sans-serif",
         fontWeight: "bold",
         display: "flex",
@@ -440,6 +448,7 @@ function Win95Window({
   onDragStart,
   onResizeStart,
   children,
+  isMobile = false,
 }: {
   id: AppId;
   title: string;
@@ -451,39 +460,44 @@ function Win95Window({
   onDragStart: (e: React.MouseEvent) => void;
   onResizeStart?: (e: React.MouseEvent, dir: "r" | "b" | "se") => void;
   children: React.ReactNode;
+  isMobile?: boolean;
 }) {
   if (!state.isOpen || state.isMinimized) return null;
   return (
     <div
       onMouseDown={onFocus}
+      onTouchStart={onFocus}
       style={{
         position: "absolute",
-        left: state.x,
-        top: state.y,
-        width: state.width,
-        height: state.height,
+        left: isMobile ? 0 : state.x,
+        top: isMobile ? 0 : state.y,
+        width: isMobile ? "100vw" : state.width,
+        height: isMobile ? "calc(100vh - 48px)" : state.height,
+        maxWidth: isMobile ? "100vw" : undefined,
+        maxHeight: isMobile ? "calc(100vh - 48px)" : undefined,
         zIndex: state.zIndex,
         display: "flex",
         flexDirection: "column",
         background: "#c0c0c0",
-        boxShadow:
-          "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf, 3px 3px 0 #000000",
+        boxShadow: isMobile
+          ? "none"
+          : "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf, 3px 3px 0 #000000",
         fontFamily: SYS_FONT,
       }}
     >
       {/* Title bar */}
       <div
-        onMouseDown={onDragStart}
+        onMouseDown={!isMobile ? onDragStart : undefined}
         style={{
           background: isActive
             ? "linear-gradient(to right, #000080, #1084d0)"
             : "#808080",
-          padding: "3px 4px",
+          padding: isMobile ? "5px 6px" : "3px 4px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: "4px",
-          cursor: "move",
+          cursor: isMobile ? "default" : "move",
           userSelect: "none",
           flexShrink: 0,
         }}
@@ -491,7 +505,7 @@ function Win95Window({
         <span
           style={{
             color: "white",
-            fontSize: "11px",
+            fontSize: isMobile ? "12px" : "11px",
             fontWeight: "bold",
             fontFamily: SYS_FONT,
             overflow: "hidden",
@@ -503,14 +517,15 @@ function Win95Window({
           {title}
         </span>
         <div style={{ display: "flex", gap: "2px", flexShrink: 0 }}>
-          <TitleBtn label="—" onClick={onMinimize} />
+          <TitleBtn label="—" onClick={onMinimize} isMobile={isMobile} />
           <TitleBtn 
             label="□" 
             onClick={() => {}} 
             disabled 
-            title="This application does not support full screen. It is 1998, multitasking is already a miracle!"
+            isMobile={isMobile}
+            title={isMobile ? "Full-screen mode active on mobile" : "This application does not support full screen. It is 1998, multitasking is already a miracle!"}
           />
-          <TitleBtn label="✕" onClick={onClose} />
+          <TitleBtn label="✕" onClick={onClose} isMobile={isMobile} />
         </div>
       </div>
       {/* Content */}
@@ -519,73 +534,77 @@ function Win95Window({
       </div>
 
       {/* Resize handles */}
-      <div
-        onMouseDown={(e) => onResizeStart && onResizeStart(e, "r")}
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-          width: "4px",
-          height: "100%",
-          cursor: "e-resize",
-          zIndex: 9999,
-        }}
-      />
-      <div
-        onMouseDown={(e) => onResizeStart && onResizeStart(e, "b")}
-        style={{
-          position: "absolute",
-          left: 0,
-          bottom: 0,
-          width: "100%",
-          height: "4px",
-          cursor: "s-resize",
-          zIndex: 9999,
-        }}
-      />
-      <div
-        onMouseDown={(e) => onResizeStart && onResizeStart(e, "se")}
-        style={{
-          position: "absolute",
-          right: 0,
-          bottom: 0,
-          width: "12px",
-          height: "12px",
-          cursor: "se-resize",
-          zIndex: 10000,
-        }}
-      >
-        {/* Retro Win95 diagonal dotted size grip */}
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 10 10"
-          style={{
-            position: "absolute",
-            right: "1px",
-            bottom: "1px",
-            pointerEvents: "none",
-          }}
-        >
-          {/* Row 3 (bottom-most) */}
-          <rect x="8" y="8" width="1.5" height="1.5" fill="#808080" />
-          <rect x="9" y="9" width="1.5" height="1.5" fill="#ffffff" />
-          <rect x="5" y="8" width="1.5" height="1.5" fill="#808080" />
-          <rect x="6" y="9" width="1.5" height="1.5" fill="#ffffff" />
-          <rect x="2" y="8" width="1.5" height="1.5" fill="#808080" />
-          <rect x="3" y="9" width="1.5" height="1.5" fill="#ffffff" />
+      {!isMobile && (
+        <>
+          <div
+            onMouseDown={(e) => onResizeStart && onResizeStart(e, "r")}
+            style={{
+              position: "absolute",
+              right: 0,
+              top: 0,
+              width: "4px",
+              height: "100%",
+              cursor: "e-resize",
+              zIndex: 9999,
+            }}
+          />
+          <div
+            onMouseDown={(e) => onResizeStart && onResizeStart(e, "b")}
+            style={{
+              position: "absolute",
+              left: 0,
+              bottom: 0,
+              width: "100%",
+              height: "4px",
+              cursor: "s-resize",
+              zIndex: 9999,
+            }}
+          />
+          <div
+            onMouseDown={(e) => onResizeStart && onResizeStart(e, "se")}
+            style={{
+              position: "absolute",
+              right: 0,
+              bottom: 0,
+              width: "12px",
+              height: "12px",
+              cursor: "se-resize",
+              zIndex: 10000,
+            }}
+          >
+            {/* Retro Win95 diagonal dotted size grip */}
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              style={{
+                position: "absolute",
+                right: "1px",
+                bottom: "1px",
+                pointerEvents: "none",
+              }}
+            >
+              {/* Row 3 (bottom-most) */}
+              <rect x="8" y="8" width="1.5" height="1.5" fill="#808080" />
+              <rect x="9" y="9" width="1.5" height="1.5" fill="#ffffff" />
+              <rect x="5" y="8" width="1.5" height="1.5" fill="#808080" />
+              <rect x="6" y="9" width="1.5" height="1.5" fill="#ffffff" />
+              <rect x="2" y="8" width="1.5" height="1.5" fill="#808080" />
+              <rect x="3" y="9" width="1.5" height="1.5" fill="#ffffff" />
 
-          {/* Row 2 */}
-          <rect x="8" y="5" width="1.5" height="1.5" fill="#808080" />
-          <rect x="9" y="6" width="1.5" height="1.5" fill="#ffffff" />
-          <rect x="5" y="5" width="1.5" height="1.5" fill="#808080" />
-          <rect x="6" y="6" width="1.5" height="1.5" fill="#ffffff" />
+              {/* Row 2 */}
+              <rect x="8" y="5" width="1.5" height="1.5" fill="#808080" />
+              <rect x="9" y="6" width="1.5" height="1.5" fill="#ffffff" />
+              <rect x="5" y="5" width="1.5" height="1.5" fill="#808080" />
+              <rect x="6" y="6" width="1.5" height="1.5" fill="#ffffff" />
 
-          {/* Row 1 (top-most) */}
-          <rect x="8" y="2" width="1.5" height="1.5" fill="#808080" />
-          <rect x="9" y="3" width="1.5" height="1.5" fill="#ffffff" />
-        </svg>
-      </div>
+              {/* Row 1 (top-most) */}
+              <rect x="8" y="2" width="1.5" height="1.5" fill="#808080" />
+              <rect x="9" y="3" width="1.5" height="1.5" fill="#ffffff" />
+            </svg>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1880,7 +1899,19 @@ function MemoriesApp({ user, confirmCustom }: { user: any; confirmCustom: (messa
 }
 
 // ─── Chat App ─────────────────────────────────────────────────────────────────
-function ChatApp({ user, personality }: { user: any; personality: string }) {
+function ChatApp({ 
+  user, 
+  personality,
+  isGuest,
+  guestAiCount,
+  onGuestAiUsed,
+}: { 
+  user: any; 
+  personality: string;
+  isGuest?: boolean;
+  guestAiCount?: number;
+  onGuestAiUsed?: () => void;
+}) {
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_CHAT);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -1933,6 +1964,22 @@ function ChatApp({ user, personality }: { user: any; personality: string }) {
     async (text: string) => {
       if (!text.trim() || isTyping) return;
       const now = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+      if (isGuest && (guestAiCount ?? 0) >= 2) {
+        setMessages((prev) => [
+          ...prev,
+          { id: prev.length + 1, from: "user", text, time: now },
+          {
+            id: prev.length + 2,
+            from: "mnema",
+            text: "⚠️ Recruiter / Guest Demo Limit Reached: Guest sessions are limited to 2 AI queries to conserve the author's personal Gemini API token quota. Please sign up for a free account to continue unlimited reflections!",
+            time: now,
+          },
+        ]);
+        setInput("");
+        return;
+      }
+
       setMessages((prev) => [...prev, { id: prev.length + 1, from: "user", text, time: now }]);
       setInput("");
       setIsTyping(true);
@@ -1984,6 +2031,9 @@ function ChatApp({ user, personality }: { user: any; personality: string }) {
             references: data.references 
           },
         ]);
+        if (isGuest && onGuestAiUsed) {
+          onGuestAiUsed();
+        }
       } catch (err: any) {
         console.error(err);
         const replyTime = new Date().toLocaleTimeString("en-US", {
@@ -2063,9 +2113,16 @@ function ChatApp({ user, personality }: { user: any; personality: string }) {
         <span style={{ fontWeight: "bold", fontFamily: SYS_FONT }}>
           Mnema Chat — v1.0.0
         </span>
-        <span style={{ color: "#008000", fontFamily: TERM_FONT, fontSize: "13px" }}>
-          [CONNECTED]
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          {isGuest && (
+            <span style={{ fontSize: "10px", color: "#000080", background: "#dfdfdf", padding: "1px 6px", border: "1px solid #808080" }}>
+              Demo: {Math.max(0, 2 - (guestAiCount ?? 0))}/2 AI Left
+            </span>
+          )}
+          <span style={{ color: "#008000", fontFamily: TERM_FONT, fontSize: "13px" }}>
+            [CONNECTED]
+          </span>
+        </div>
       </div>
 
       {/* Message log */}
@@ -2722,7 +2779,17 @@ function HelpApp({ onClose }: { onClose?: () => void }) {
 }
 
 // ─── Time Machine (Goals) App ──────────────────────────────────────────────────
-function TimeMachineApp({ user }: { user: any }) {
+function TimeMachineApp({ 
+  user, 
+  isGuest, 
+  guestAiCount, 
+  onGuestAiUsed 
+}: { 
+  user: any; 
+  isGuest?: boolean; 
+  guestAiCount?: number; 
+  onGuestAiUsed?: () => void; 
+}) {
   const [text, setText] = useState("");
   const [goals, setGoals] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -2752,6 +2819,11 @@ function TimeMachineApp({ user }: { user: any }) {
   }, [user]);
 
   const handleSave = async () => {
+    if (isGuest && (guestAiCount ?? 0) >= 2) {
+      alert("⚠️ Guest Demo Limit Reached: You have reached the 2 AI request limit for this guest session. Please create a free account to continue extracting goals.");
+      return;
+    }
+
     setSaving(true);
     try {
       const token = await user.getIdToken();
@@ -2766,6 +2838,7 @@ function TimeMachineApp({ user }: { user: any }) {
       if (res.ok) {
         const data = await res.json();
         setGoals(data.goals || []);
+        if (isGuest && onGuestAiUsed) onGuestAiUsed();
         alert("Future vision statement saved and goals extracted successfully!");
       } else {
         alert("Failed to extract goals. Make sure the API server is running.");
@@ -2780,8 +2853,9 @@ function TimeMachineApp({ user }: { user: any }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#c0c0c0", fontFamily: SYS_FONT, padding: "8px", overflow: "hidden" }}>
-      <div style={{ background: "linear-gradient(to right, #000080, #1084d0)", color: "white", padding: "2px 6px", fontSize: "11px", fontWeight: "bold", marginBottom: "6px" }}>
-        Write your future vision and let Mnema extract your core goals
+      <div style={{ background: "linear-gradient(to right, #000080, #1084d0)", color: "white", padding: "2px 6px", fontSize: "11px", fontWeight: "bold", marginBottom: "6px", display: "flex", justifyContent: "space-between" }}>
+        <span>Write your future vision and let Mnema extract your core goals</span>
+        {isGuest && <span>Demo: {Math.max(0, 2 - (guestAiCount ?? 0))}/2 AI left</span>}
       </div>
 
       {loading ? (
@@ -4817,8 +4891,10 @@ function PaintApp({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((clientX - rect.left) / 10);
-    const y = Math.floor((clientY - rect.top) / 10);
+    const cellW = rect.width / 32;
+    const cellH = rect.height / 32;
+    const x = Math.floor((clientX - rect.left) / cellW);
+    const y = Math.floor((clientY - rect.top) / cellH);
 
     if (x >= 0 && x < 32 && y >= 0 && y < 32) {
       const idx = y * 32 + x;
@@ -4841,6 +4917,19 @@ function PaintApp({
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDrawing.current) {
       drawPixel(e.clientX, e.clientY);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isDrawing.current = true;
+    if (e.touches[0]) {
+      drawPixel(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDrawing.current && e.touches[0]) {
+      drawPixel(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
 
@@ -4924,10 +5013,17 @@ function PaintApp({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUpOrLeave}
             onMouseLeave={handleMouseUpOrLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleMouseUpOrLeave}
             style={{
               display: "block",
               cursor: "crosshair",
               boxShadow: "2px 2px 6px rgba(0,0,0,0.4)",
+              touchAction: "none",
+              maxWidth: "100%",
+              height: "auto",
+              aspectRatio: "1/1",
             }}
           />
         </div>
@@ -5163,6 +5259,9 @@ function Taskbar({
   onStartClick,
   onWindowClick,
   desktopColor,
+  isMobile,
+  isGuest,
+  guestAiCount,
 }: {
   windows: Record<AppId, WinState>;
   activeId: AppId | null;
@@ -5170,6 +5269,9 @@ function Taskbar({
   onStartClick: () => void;
   onWindowClick: (id: AppId) => void;
   desktopColor: string;
+  isMobile?: boolean;
+  isGuest?: boolean;
+  guestAiCount?: number;
 }) {
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -5197,8 +5299,8 @@ function Taskbar({
         borderTop: "2px solid rgba(255,255,255,0.35)",
         display: "flex",
         alignItems: "center",
-        gap: "4px",
-        padding: "0 6px",
+        gap: isMobile ? "2px" : "4px",
+        padding: isMobile ? "0 4px" : "0 6px",
         zIndex: 9999,
       }}
     >
@@ -5210,8 +5312,8 @@ function Taskbar({
         }}
         style={{
           height: "34px",
-          padding: "0 12px",
-          fontSize: "13px",
+          padding: isMobile ? "0 8px" : "0 12px",
+          fontSize: isMobile ? "12px" : "13px",
           fontWeight: "bold",
           background: startOpen ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.18)",
           color: "white",
@@ -5224,6 +5326,7 @@ function Taskbar({
           boxShadow: startOpen
             ? "inset -1px -1px rgba(255,255,255,0.4), inset 1px 1px rgba(0,0,0,0.6), inset -2px -2px rgba(255,255,255,0.2), inset 2px 2px rgba(0,0,0,0.8)"
             : "inset -1px -1px rgba(0,0,0,0.6), inset 1px 1px rgba(255,255,255,0.4), inset -2px -2px rgba(0,0,0,0.4), inset 2px 2px rgba(255,255,255,0.2)",
+          flexShrink: 0,
         }}
       >
         <OrangeSliceLogo />
@@ -5237,12 +5340,24 @@ function Taskbar({
           height: "34px",
           background: "rgba(0,0,0,0.4)",
           borderRight: "1px solid rgba(255,255,255,0.2)",
-          margin: "0 4px",
+          margin: "0 2px",
+          flexShrink: 0,
         }}
       />
 
-      {/* Open window buttons */}
-      <div style={{ display: "flex", gap: "4px", flex: 1, overflow: "hidden" }}>
+      {/* Open window buttons with mobile touch horizontal scroll */}
+      <div 
+        style={{ 
+          display: "flex", 
+          gap: "4px", 
+          flex: 1, 
+          overflowX: "auto", 
+          overflowY: "hidden", 
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
+          minWidth: 0,
+        }}
+      >
         {openWindows.map(([id, state]) => {
           const isActive = !state.isMinimized && id === activeId;
           return (
@@ -5251,9 +5366,9 @@ function Taskbar({
               onClick={() => onWindowClick(id)}
               style={{
                 height: "34px",
-                padding: "0 12px",
-                fontSize: "12px",
-                maxWidth: "160px",
+                padding: isMobile ? "0 8px" : "0 12px",
+                fontSize: isMobile ? "11px" : "12px",
+                maxWidth: isMobile ? "120px" : "160px",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -5262,6 +5377,7 @@ function Taskbar({
                 border: "none",
                 cursor: "default",
                 fontFamily: SYS_FONT,
+                flexShrink: 0,
                 boxShadow: isActive
                   ? "inset -1px -1px rgba(255,255,255,0.4), inset 1px 1px rgba(0,0,0,0.6), inset -2px -2px rgba(255,255,255,0.2), inset 2px 2px rgba(0,0,0,0.8)"
                   : "inset -1px -1px rgba(0,0,0,0.6), inset 1px 1px rgba(255,255,255,0.4), inset -2px -2px rgba(0,0,0,0.4), inset 2px 2px rgba(255,255,255,0.2)",
@@ -5273,25 +5389,52 @@ function Taskbar({
         })}
       </div>
 
+      {/* Guest Mode Indicator Badge */}
+      {isGuest && (
+        <div
+          title="Guest Session: Purged on logout. 2 AI requests limit."
+          style={{
+            height: "28px",
+            padding: "0 6px",
+            background: "rgba(0, 0, 0, 0.25)",
+            border: "1px solid rgba(255,255,255,0.3)",
+            fontSize: isMobile ? "9px" : "10px",
+            fontWeight: "bold",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            gap: "3px",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span>👤 Demo</span>
+          <span style={{ color: (guestAiCount ?? 0) >= 2 ? "#ff9999" : "#80ff80" }}>
+            ({Math.max(0, 2 - (guestAiCount ?? 0))}/2 AI)
+          </span>
+        </div>
+      )}
+
       {/* System tray */}
       <div
         style={{
           height: "34px",
-          padding: "0 10px",
+          padding: isMobile ? "0 6px" : "0 10px",
           display: "flex",
           alignItems: "center",
           boxShadow: "inset 1px 1px rgba(0,0,0,0.6), inset -1px -1px rgba(255,255,255,0.4), inset 2px 2px rgba(0,0,0,0.4), inset -2px -2px rgba(255,255,255,0.2)",
-          fontSize: "12px",
+          fontSize: isMobile ? "11px" : "12px",
           fontFamily: SYS_FONT,
           whiteSpace: "nowrap",
           background: "rgba(0,0,0,0.15)",
           color: "white",
+          flexShrink: 0,
         }}
       >
         <TrayOrangeIcon />
-        <TrayNetworkIcon />
+        {!isMobile && <TrayNetworkIcon />}
         <TrayVolumeIcon />
-        <div style={{ width: "1px", height: "20px", background: "rgba(0,0,0,0.4)", borderRight: "1px solid rgba(255,255,255,0.2)", margin: "0 10px 0 2px" }} />
+        <div style={{ width: "1px", height: "20px", background: "rgba(0,0,0,0.4)", borderRight: "1px solid rgba(255,255,255,0.2)", margin: isMobile ? "0 6px 0 2px" : "0 10px 0 2px" }} />
         {timeStr}
       </div>
     </div>
@@ -5350,6 +5493,8 @@ function LoginDialog() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showGuestNotice, setShowGuestNotice] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -5377,10 +5522,75 @@ function LoginDialog() {
     }
   };
 
+  const handleGuestSignIn = async () => {
+    setGuestLoading(true);
+    try {
+      const userCredential = await signInAnonymously(auth);
+      sessionStorage.setItem("mnema_is_guest", "true");
+      sessionStorage.setItem("mnema_guest_ai_count", "0");
+      
+      // Pre-populate sample entries if guest collection is empty
+      const uid = userCredential.user.uid;
+      const entriesRef = collection(db, "users", uid, "entries");
+      const existingSnap = await getDocs(entriesRef);
+      if (existingSnap.empty) {
+        const todayStr = new Date().toISOString().split("T")[0];
+        const sample1 = {
+          title: "Reflecting on 1998",
+          date: todayStr,
+          mood: 8,
+          content: "Just booted up Mnema '98. The dial-up sound is still ringing in my ears, but there is something deeply calming about this retro desktop. Writing down my daily thoughts here feels grounding. #nostalgia #vintage",
+          tags: ["nostalgia", "vintage"],
+          createdAt: serverTimestamp(),
+          doodle: "",
+        };
+        const sample2 = {
+          title: "Thoughts on AI & Future Tech",
+          date: todayStr,
+          mood: 9,
+          content: "Building full-stack software and thinking about how personal operating systems evolve. Will future cognitive AI understand our memories and emotional patterns? #tech #reflections",
+          tags: ["tech", "reflections"],
+          createdAt: serverTimestamp(),
+          doodle: "",
+        };
+        await addDoc(entriesRef, sample1);
+        await addDoc(entriesRef, sample2);
+        
+        // Generate RAG embeddings in backend non-blocking
+        try {
+          const token = await userCredential.user.getIdToken();
+          fetch(`${BACKEND_URL}/api/journals`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ text: sample1.content, mood: sample1.mood, date: sample1.date }),
+          }).catch(() => {});
+          fetch(`${BACKEND_URL}/api/journals`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ text: sample2.content, mood: sample2.mood, date: sample2.date }),
+          }).catch(() => {});
+        } catch {
+          // non-blocking
+        }
+      }
+      setShowGuestNotice(false);
+    } catch (err: any) {
+      console.error("Guest sign-in error:", err);
+      let msg = err.message || "Failed to sign in as guest.";
+      if (err.code === "auth/admin-restricted-operation" || err.code === "auth/operation-not-allowed") {
+        msg = "Anonymous Sign-In is not enabled yet in your Firebase Project. Please enable 'Anonymous' under Authentication -> Sign-in method in Firebase Console.";
+      }
+      alert(msg);
+    } finally {
+      setGuestLoading(false);
+    }
+  };
+
   return (
     <div
       style={{
         width: "360px",
+        maxWidth: "92vw",
         background: "#c0c0c0",
         boxShadow:
           "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf, 3px 3px 0 #000000",
@@ -5512,10 +5722,37 @@ function LoginDialog() {
           </button>
         </div>
 
+        {/* Recruiter / Guest Demo Access Button */}
+        <div style={{ marginTop: "6px", paddingTop: "8px", borderTop: "1px solid #808080" }}>
+          <button
+            type="button"
+            onClick={() => setShowGuestNotice(true)}
+            disabled={loading || guestLoading}
+            style={{
+              width: "100%",
+              padding: "5px 10px",
+              background: "#e8effc",
+              border: "none",
+              cursor: "default",
+              fontFamily: SYS_FONT,
+              fontSize: "11px",
+              fontWeight: "bold",
+              color: "#000080",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              boxShadow: "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf",
+            }}
+          >
+            <span>👤</span> Recruiter / Guest Demo Access
+          </button>
+        </div>
+
         {/* Free Tier Info Banner */}
         <div
           style={{
-            marginTop: "12px",
+            marginTop: "8px",
             padding: "8px",
             background: "#dfdfdf",
             boxShadow: "inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a",
@@ -5534,6 +5771,118 @@ function LoginDialog() {
           </div>
         </div>
       </form>
+
+      {/* Recruiter / Guest Notice Modal */}
+      {showGuestNotice && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            style={{
+              width: "380px",
+              maxWidth: "94vw",
+              background: "#c0c0c0",
+              boxShadow:
+                "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf, 3px 3px 0 #000000",
+              fontFamily: SYS_FONT,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Title bar */}
+            <div
+              style={{
+                background: "linear-gradient(to right, #000080, #1084d0)",
+                padding: "3px 4px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                color: "white",
+                fontSize: "11px",
+                fontWeight: "bold",
+              }}
+            >
+              <span>Recruiter & Guest Access — Notice</span>
+              <button
+                onClick={() => setShowGuestNotice(false)}
+                style={{
+                  width: "16px",
+                  height: "14px",
+                  background: "#c0c0c0",
+                  border: "none",
+                  fontSize: "9px",
+                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            {/* Body */}
+            <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "10px", fontSize: "11px" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <span style={{ fontSize: "28px", lineHeight: "1" }}>⚠️</span>
+                <div style={{ lineHeight: "1.4", color: "#000" }}>
+                  <strong>Notice for Recruiters & Guests:</strong>
+                  <ul style={{ margin: "6px 0 0", paddingLeft: "16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <li>Your session is <strong>temporary</strong>. All notes, goals, and doodles are purged on logout.</li>
+                    <li>You receive <strong>2 AI reflections/requests</strong> (due to personal Gemini API key quota limits).</li>
+                    <li>Sample 1998 memories will be loaded so you can test RAG search & mood graphs immediately!</li>
+                  </ul>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end", marginTop: "6px" }}>
+                <button
+                  type="button"
+                  onClick={handleGuestSignIn}
+                  disabled={guestLoading}
+                  style={{
+                    background: "#c0c0c0",
+                    border: "none",
+                    cursor: "default",
+                    fontFamily: SYS_FONT,
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    padding: "3px 14px",
+                    boxShadow: "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf",
+                  }}
+                >
+                  {guestLoading ? "Starting Demo..." : "Enter as Guest"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowGuestNotice(false)}
+                  disabled={guestLoading}
+                  style={{
+                    background: "#c0c0c0",
+                    border: "none",
+                    cursor: "default",
+                    fontFamily: SYS_FONT,
+                    fontSize: "12px",
+                    padding: "3px 12px",
+                    boxShadow: "inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -5664,10 +6013,41 @@ function RetroConfirmModal({
   );
 }
 
+const DEFAULT_ICON_POSITIONS: Record<string, { x: number; y: number }> = {
+  journal: { x: 12, y: 12 },
+  memories: { x: 12, y: 116 },
+  chat: { x: 12, y: 220 },
+  profile: { x: 12, y: 324 },
+  settings: { x: 12, y: 428 },
+  help: { x: 12, y: 532 },
+  goals: { x: 12, y: 636 },
+  terminal: { x: 112, y: 12 },
+  paint: { x: 112, y: 116 },
+  recycle: { x: 112, y: 220 },
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [selectedIconIndex, setSelectedIconIndex] = useState<number | null>(null);
+
+  // Responsive mobile screen detector
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Guest / Recruiter Mode State (persists per session)
+  const [guestAiCount, setGuestAiCount] = useState<number>(() => {
+    return Number(sessionStorage.getItem("mnema_guest_ai_count") || 0);
+  });
+  useEffect(() => {
+    sessionStorage.setItem("mnema_guest_ai_count", String(guestAiCount));
+  }, [guestAiCount]);
+
+  const isGuest = Boolean(user?.isAnonymous || sessionStorage.getItem("mnema_is_guest") === "true");
 
   // Current session draft doodle
   const [currentDoodle, setCurrentDoodle] = useState<string | null>(null);
@@ -5699,31 +6079,22 @@ export default function App() {
 
   // Icon Positions State
   const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>(() => {
-    const defaultPositions = {
-      journal: { x: 12, y: 12 },
-      memories: { x: 96, y: 12 },
-      chat: { x: 180, y: 12 },
-      profile: { x: 264, y: 12 },
-      settings: { x: 348, y: 12 },
-      help: { x: 432, y: 12 },
-      goals: { x: 516, y: 12 },
-      terminal: { x: 600, y: 12 },
-      paint: { x: 12, y: 104 },
-      recycle: { x: 96, y: 104 },
-    };
-
     const saved = localStorage.getItem("mnema_iconPositions");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object") {
-          return { ...defaultPositions, ...parsed };
+        if (parsed && typeof parsed === "object" && parsed.journal) {
+          // If user has old horizontal layout (memories was at x: 96, y: 12), automatically migrate to vertical layout
+          if (parsed.memories && parsed.memories.x === 96 && parsed.memories.y === 12) {
+            return DEFAULT_ICON_POSITIONS;
+          }
+          return { ...DEFAULT_ICON_POSITIONS, ...parsed };
         }
       } catch (e) {
         console.error("Error loading icon positions:", e);
       }
     }
-    return defaultPositions;
+    return DEFAULT_ICON_POSITIONS;
   });
 
   useEffect(() => {
@@ -5782,18 +6153,7 @@ export default function App() {
 
   const handleResetIconPositions = () => {
     localStorage.removeItem("mnema_iconPositions");
-    setIconPositions({
-      journal: { x: 12, y: 12 },
-      memories: { x: 12, y: 116 },
-      chat: { x: 12, y: 220 },
-      profile: { x: 12, y: 324 },
-      settings: { x: 12, y: 428 },
-      help: { x: 12, y: 532 },
-      goals: { x: 12, y: 636 },
-      terminal: { x: 112, y: 12 },
-      paint: { x: 112, y: 116 },
-      recycle: { x: 112, y: 220 },
-    });
+    setIconPositions(DEFAULT_ICON_POSITIONS);
     alert("Desktop icon grid positions restored to default!");
   };
 
@@ -5821,17 +6181,7 @@ export default function App() {
     setIconSize("normal");
     setDesktopTextPreset("mnema98");
     setDesktopText("Mnema '98");
-    setIconPositions({
-      journal: { x: 12, y: 12 },
-      memories: { x: 12, y: 92 },
-      chat: { x: 12, y: 172 },
-      profile: { x: 12, y: 252 },
-      settings: { x: 12, y: 332 },
-      help: { x: 12, y: 412 },
-      goals: { x: 12, y: 492 },
-      terminal: { x: 12, y: 572 },
-      recycle: { x: 12, y: 652 },
-    });
+    setIconPositions(DEFAULT_ICON_POSITIONS);
 
     alert("All system preferences and settings have been restored to defaults!");
   };
@@ -6125,6 +6475,25 @@ export default function App() {
     }
   };
 
+  const handleLogout = async () => {
+    if (isGuest && user) {
+      try {
+        const entriesSnap = await getDocs(collection(db, "users", user.uid, "entries"));
+        for (const d of entriesSnap.docs) {
+          await deleteDoc(d.ref).catch(() => {});
+        }
+        await deleteDoc(doc(db, "users", user.uid, "settings", "timemachine")).catch(() => {});
+        await user.delete().catch(() => {});
+      } catch (e) {
+        console.warn("Guest data purge error:", e);
+      }
+      sessionStorage.removeItem("mnema_is_guest");
+      sessionStorage.removeItem("mnema_guest_ai_count");
+    }
+    await signOut(auth);
+    setStartOpen(false);
+  };
+
   const renderAppContent = (id: AppId) => {
     switch (id) {
       case "journal":
@@ -6142,15 +6511,30 @@ export default function App() {
       case "memories":
         return <MemoriesApp user={user} confirmCustom={confirmCustom} />;
       case "chat":
-        return <ChatApp user={user} personality={personality} />;
+        return (
+          <ChatApp 
+            user={user} 
+            personality={personality} 
+            isGuest={isGuest} 
+            guestAiCount={guestAiCount} 
+            onGuestAiUsed={() => setGuestAiCount((c) => c + 1)} 
+          />
+        );
       case "profile":
         return <ProfileApp user={user} />;
       case "help":
         return <HelpApp onClose={() => closeWindow("help")} />;
       case "goals":
-        return <TimeMachineApp user={user} />;
+        return (
+          <TimeMachineApp 
+            user={user} 
+            isGuest={isGuest} 
+            guestAiCount={guestAiCount} 
+            onGuestAiUsed={() => setGuestAiCount((c) => c + 1)} 
+          />
+        );
       case "terminal":
-        return <TerminalApp onClose={() => closeWindow("terminal")} onShutDown={() => signOut(auth)} onOpenCreator={() => openWindow("creator")} onOpenJournal={() => openWindow("journal")} />;
+        return <TerminalApp onClose={() => closeWindow("terminal")} onShutDown={handleLogout} onOpenCreator={() => openWindow("creator")} onOpenJournal={() => openWindow("journal")} />;
       case "creator":
         return <CreatorApp />;
       case "paint":
@@ -6297,13 +6681,13 @@ export default function App() {
       {DESKTOP_ICONS.map((di, i) => {
         const col = Math.floor(i / 7);
         const row = i % 7;
-        const defaultX = 12 + col * 100;
-        const defaultY = 12 + row * 104;
-        const pos = iconPositions[di.key] || { x: defaultX, y: defaultY };
+        const defaultX = isMobile ? (col === 0 ? 8 : 88) : (12 + col * 100);
+        const defaultY = isMobile ? (10 + row * 82) : (12 + row * 104);
+        const pos = isMobile ? { x: defaultX, y: defaultY } : (iconPositions[di.key] || DEFAULT_ICON_POSITIONS[di.key] || { x: defaultX, y: defaultY });
         return (
           <div
             key={di.key}
-            onMouseDown={(e) => handleIconDragStart(e, di.key)}
+            onMouseDown={(e) => !isMobile && handleIconDragStart(e, di.key)}
             onClick={(e) => e.stopPropagation()}
             style={{
               position: "absolute",
@@ -6318,7 +6702,16 @@ export default function App() {
               selected={selectedIconIndex === i}
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedIconIndex(i);
+                if (isMobile) {
+                  // On mobile touch screen, single tap directly launches the app!
+                  if (di.key === "recycle") {
+                    triggerRecycleJoke();
+                  } else {
+                    openWindow(di.id);
+                  }
+                } else {
+                  setSelectedIconIndex(i);
+                }
               }}
               onDoubleClick={() => {
                 if (di.key === "recycle") {
@@ -6327,7 +6720,7 @@ export default function App() {
                   openWindow(di.id);
                 }
               }}
-              size={iconSize}
+              size={isMobile ? "small" : iconSize}
             />
           </div>
         );
@@ -6346,6 +6739,7 @@ export default function App() {
           onFocus={() => handleFocus(id)}
           onDragStart={(e) => handleDragStart(e, id)}
           onResizeStart={(e, dir) => handleResizeStart(e, id, dir)}
+          isMobile={isMobile}
         >
           {renderAppContent(id)}
         </Win95Window>
@@ -6356,10 +6750,7 @@ export default function App() {
         <StartMenu
           onOpenApp={openWindow}
           onClose={() => setStartOpen(false)}
-          onShutDown={() => {
-            signOut(auth);
-            setStartOpen(false);
-          }}
+          onShutDown={handleLogout}
         />
       )}
 
@@ -6371,6 +6762,9 @@ export default function App() {
         onStartClick={() => setStartOpen((s) => !s)}
         onWindowClick={handleTaskbarClick}
         desktopColor={desktopColor}
+        isMobile={isMobile}
+        isGuest={isGuest}
+        guestAiCount={guestAiCount}
       />
 
       {/* Screen Saver overlay */}
